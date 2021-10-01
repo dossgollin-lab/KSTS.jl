@@ -7,18 +7,11 @@ using DelayEmbeddings
 using StatsBase
 using Distributions
 
-grid_locs = CSV.read(
-    "/Users/sophiaprieto/Desktop/Research/LDS-Inferences-main/data/ERCOT_0_5_deg_lat_lon_index_key.csv",
-    DataFrame,
-)
+grid_locs = CSV.read("data/ERCOT_0_5_deg_lat_lon_index_key.csv", DataFrame)
 
-ssrd = readdlm(
-    "/Users/sophiaprieto/Desktop/Research/LDS-Inferences-main/data/ERCOT_Solar_Rad_Daily.txt",
-)
+ssrd = readdlm("data/ERCOT_Solar_Rad_Daily.txt")
 
-WP = readdlm(
-    "/Users/sophiaprieto/Desktop/Research/LDS-Inferences-main/data/ERCOT_Wind_Power_Daily.txt",
-)
+WP = readdlm("data/ERCOT_Wind_Power_Daily.txt")
 
 n = 5 * 365
 
