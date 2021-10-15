@@ -1,0 +1,4 @@
+name = "LDSSim"
+uuid = "23356bb8-7963-4833-8f43-55c874cd6f29"
+authors = ["James Doss-Gollin <jdossgollin@rice.edu>"]
+version = "0.1.0"
