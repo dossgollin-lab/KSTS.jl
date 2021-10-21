@@ -74,10 +74,10 @@ end
 function knn_sim_index(x, xtest, nneib, w)
     d = zeros(size(xtest, 2), size(x, 1))
     for i in (1:size(x, 2))
-        d[:, i] = w[i] * (x[:, i] - xtest[:, i])^2
+        d[:, i] = w[i] * (x[:, i] .- xtest[:, i])^2 # difference of each locations outputs from same day output of different location
     end
-    sumd = sum(d, 1)
-    sorted_data = sortperm(sumd, alg = QuickSort)
+    sumd = sum(d, 1) # total difference from different location
+    sorted_data = sortperm(sumd, alg = QuickSort) 
     yknn = sorted_data[1:nneib]
     return yknn
 end
@@ -104,7 +104,7 @@ function selected_days(days, sel_days)
     for i = 1:length(days)
         indexx[i] = (days[i] in sel_days)
     end
-    return indexx
+    return vec(indexx)
 end
 
 ###Function 3 
@@ -143,9 +143,10 @@ function ksts(
     end_date = st_date + Dates.Day(N_valid)
     dr = st_date:Day(1):end_date
     time_stamp = collect(dr)
-    day_index = [Dates.day(i) for i in time_stamp]
+    day_index = [Dates.dayofyear(i) for i in time_stamp]
     
     #Setting up Storage for Simulations
+    # why do we do this
     Xnew = zeros(N_valid, ngrids)
     for i = 1:max_embd
         Xnew[i, :] = jitter(Fld[i, :])
@@ -157,7 +158,7 @@ function ksts(
     Y = zeros(Float64, N_valid - max_embd, 1, ngrids)
     
     #Get Lagged Structure Upto Max Embedding
-    # Stores offset wind and solar output per day for each location
+    # Stores offset wind and solar output per day for each location [day, day after that; ....]
     # Y keeps original indexing 
     for i = 1:ngrids
         str = parse.(Float64, string.(Fld[:, i]))
@@ -175,7 +176,7 @@ function ksts(
         # nn_index[time, neighbor index order, grid location] ordered set of k nearest neighbors indices for each site
         nn_index = zeros(1, nneib, ngrids)
 
-        day = day_index[i] # day of month
+        day = day_index[i] # day of year
         sel_days = close_ind(day, 366, day_mv) # season window
         
         #Subset to the moving window
@@ -185,17 +186,18 @@ function ksts(
         sel_days = collect([i for i in sel_days]) # window as vector
 
         ## X_t to return the days that are within the selected window.
-        indexx = selected_days(days, sel_days)
+        days_inc = selected_days(days, sel_days)
 
         ## can only index booleans with same dimension
-        X_t = X[indexx, :, :]
-        Y_t = Y[indexx, :, :]
+        # why does it say indexing at 1832 x 432 x1??
+        X_t = X[days_inc, :, :]
+        Y_t = Y[days_inc, :, :]
 
         # for each location, 
-        for j in 1:ngrids
+        for j in 3:ngrids
             #Setting the Test Parameters
-            sel_pars = j - sel_lags
-            xtest = Xnew[sel_pars, j]
+            sel_pars = j .- sel_lags 
+            xtest = Xnew[sel_pars, j] # two locations before current location on the same day
             #Running the KNN Algorithm
             nn_index[:, :, j] = knn_sim_index(X_t[:, :, j], xtest, nneib, w) 
         end
