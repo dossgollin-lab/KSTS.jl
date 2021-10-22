@@ -74,9 +74,9 @@ end
 function knn_sim_index(x, xtest, nneib, w)
     d = zeros(size(xtest, 2), size(x, 1))
     for i in (1:size(x, 2))
-        d[:, i] = w[i] * (x[:, i] .- xtest[:, i])^2 # difference of each locations outputs from same day output of different location
+        d[:, i] = w[i] * (x[:, i] .- xtest[:, i])^2 # difference of each locations outputs from historic outputs,
     end
-    sumd = sum(d, 1) # total difference from different location
+    sumd = sum(d, 1) # total difference from 
     sorted_data = sortperm(sumd, alg = QuickSort) 
     yknn = sorted_data[1:nneib]
     return yknn
@@ -197,7 +197,7 @@ function ksts(
         for j in 3:ngrids
             #Setting the Test Parameters
             sel_pars = j .- sel_lags 
-            xtest = Xnew[sel_pars, j] # two locations before current location on the same day
+            xtest = Xnew[sel_pars, j] # two day outputs from same location
             #Running the KNN Algorithm
             nn_index[:, :, j] = knn_sim_index(X_t[:, :, j], xtest, nneib, w) 
         end
