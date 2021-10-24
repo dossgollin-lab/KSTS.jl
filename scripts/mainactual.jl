@@ -188,8 +188,6 @@ function ksts(
         ## X_t to return the days that are within the selected window.
         days_inc = selected_days(days, sel_days)
 
-        ## can only index booleans with same dimension
-        # why does it say indexing at 1832 x 432 x1??
         X_t = X[days_inc, :, :]
         Y_t = Y[days_inc, :, :]
 
