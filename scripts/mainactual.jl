@@ -192,9 +192,9 @@ function ksts(
         Y_t = Y[days_inc, :, :]
 
         # for each location, 
-        for j in 3:ngrids
+        for j in 1:ngrids
             #Setting the Test Parameters
-            sel_pars = j .- sel_lags 
+            sel_pars = i .- sel_lags 
             xtest = Xnew[sel_pars, j] # two day outputs from same location
             #Running the KNN Algorithm
             nn_index[:, :, j] = knn_sim_index(X_t[:, :, j], xtest, nneib, w) 
