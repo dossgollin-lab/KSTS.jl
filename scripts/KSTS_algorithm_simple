@@ -1,0 +1,26 @@
+# define starting data
+import Random
+p = 3 # number of sites
+n = 7 # lenght of record (time)
+Random.seed!(1234)
+X = rand(1:10, n, p)
+
+# step one - create state space D
+M = 2 # number of lags
+D = Array{Tuple{Int, Int}}(undef, p,n-M)
+for i in (1:p)
+    for t in (M+1:n)
+        D[i,t-M] = (X[t-1,i], X[t-2,i])
+    end
+end
+D
+# step two - compute k nearest neighbors for each site
+
+# step three - compute resampling probability
+
+# step four - compute similarity vector
+
+# step five - curtail largest k values
+
+# step five - resample from curtailed similarity matrix S
+
