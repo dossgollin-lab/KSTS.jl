@@ -1,26 +1,45 @@
 # define starting data
 import Random
+using StatsBase
 p = 3 # number of sites
 n = 7 # lenght of record (time)
 Random.seed!(1234)
 X = rand(1:10, n, p)
+k = 3 # number of neighbors
 
 # step one - create state space D
-M = 2 # number of lags
-D = Array{Tuple{Int, Int}}(undef, p,n-M)
+M = 1 # number of lags
+D = zeros(p,n-M)
+
 for i in (1:p)
     for t in (M+1:n)
-        D[i,t-M] = (X[t-1,i], X[t-2,i])
+        D[i,t-M] = (X[t-1,i])
     end
 end
-D
 # step two - compute k nearest neighbors for each site
-
+r = zeros(6)
+tau = zeros(3,6)
+for i in 1:p
+    r = (D[i,1] .- D[i,:]).^2
+    tau[i,:] = sortperm(r, alg = QuickSort)
+end
+tau = tau[:,1:k]
 # step three - compute resampling probability
-
-# step four - compute similarity vector
-
+sumj = [sum(1/k for k in 1:size(tau,2))]
+pj = [(1/h)/sumj for h in 1:size(tau,2)]
+# step four - Define matrix T
+T = zeros(p,n) 
+tau = [Int(i) for i in tau]
+for j in 1:p
+    for i in tau[:,j]
+        T[findall(tau[:,j] .== i),i] .= pj[j][1]
+    end
+end
+# compute similarity matrix
+sim = vec(sum(T,dims = 1))
+ordersim = last(sortperm(sim, alg = QuickSort), k)
 # step five - curtail largest k values
-
+sumq = sum(sim[ordersim])
+prob = [sim[i]/sumq for i in ordersim]
 # step five - resample from curtailed similarity matrix S
-
+t = sample(ordersim, Weights(prob))
