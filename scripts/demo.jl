@@ -16,7 +16,7 @@ function get_default_inputs()
     solar = readdlm(datadir("raw", "ERCOT_Solar_Rad_Daily.txt"), skipstart = 1)[:, 2:end]
     lon = grid_locs[:, :lon]
     lat = grid_locs[:, :lat]
-    return WindSolarData(; wind = wind, solar = solar, lon = lon, lat = lat)
+    return WindSolarData(wind = wind, solar = solar, lon = lon, lat = lat)
 end
 
 # get the raw data as a `WindSolarData` format
