@@ -16,10 +16,7 @@ struct WindSolarData
     lat::Vector{F}
     lon::Vector{F}
     function WindSolarData(;
-        wind = zeros(3, 2),
-        solar = zeros(3, 2),
-        lat = zeros(2),
-        lon = zeros(2),
+        wind=zeros(3, 2), solar=zeros(3, 2), lat=zeros(2), lon=zeros(2)
     )
         @assert size(wind) == size(solar) "wind and solar must be same size"
         @assert size(lat) == size(lon) "longitude and latitude must be same size"
@@ -54,15 +51,10 @@ This function fits the
     (what else is strictly required?)
 """
 function fit_ksts(
-    wsd::WindSolarData;
-    n_neighbors::R,
-    n_lags::R,
-    max_window::R,
-    max_embedding::R,
+    wsd::WindSolarData; n_neighbors::R, n_lags::R, max_window::R, max_embedding::R
 )::KSTSFit
     return KSTSFit() # placeholder
 end
-
 
 """
 This holds a sequences that you would create once you have your fitted object.

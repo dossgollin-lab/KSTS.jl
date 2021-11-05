@@ -7,7 +7,6 @@ using DelayEmbeddings
 using StatsBase
 using Distributions
 
-
 function get_input_data()
     grid_locs = CSV.read("data/raw/ERCOT_0_5_deg_lat_lon_index_key.csv", DataFrame)
     solar_radiation = readdlm("data/raw/ERCOT_Solar_Rad_Daily.txt")
@@ -15,15 +14,14 @@ function get_input_data()
     return grid_locs, solar_radiation, wind_speed
 end
 
-
 n = 5 * 365 # 5 years of data (original data is 40 years but for now, use 5)
 p = 217 # number of sites
 
 grid_locs, ssrd, WP = get_input_data()
 
-WP_indexed = WP[2:n+1, 2:p]
+WP_indexed = WP[2:(n + 1), 2:p]
 
-ssrd_indexed = ssrd[2:n+1, 2:p]
+ssrd_indexed = ssrd[2:(n + 1), 2:p]
 
 #Concatenate the fields
 Fld = hcat(WP_indexed, ssrd_indexed)
@@ -52,11 +50,11 @@ w = [1, 0] #Scaling Weights
 
 function close_ind(curr, max, window)
     if ((curr - window) < 1)
-        indx = [last(1:max, (1 + abs(curr - window))), 1:(curr+window)]
+        indx = [last(1:max, (1 + abs(curr - window))), 1:(curr + window)]
     elseif ((curr + window) > max)
-        indx = [((curr-window):max), (1:((curr+window)-max))]
+        indx = [((curr - window):max), (1:((curr + window) - max))]
     else
-        indx = [(curr-window):(curr+window)]
+        indx = [(curr - window):(curr + window)]
     end
     return indx
 end
@@ -77,7 +75,7 @@ function knn_sim_index(x, xtest, nneib, w)
         d[:, i] = w[i] * (x[:, i] .- xtest[:, i])^2 # difference of each locations outputs from historic outputs,
     end
     sumd = sum(d, 1) # total difference from 
-    sorted_data = sortperm(sumd, alg = QuickSort) 
+    sorted_data = sortperm(sumd; alg=QuickSort)
     yknn = sorted_data[1:nneib]
     return yknn
 end
@@ -101,7 +99,7 @@ function selected_days(days, sel_days)
     if length(sel_days) > 1
         sel_days = vcat(sel_days[1], sel_days[2])
     end
-    for i = 1:length(days)
+    for i in 1:length(days)
         indexx[i] = (days[i] in sel_days)
     end
     return vec(indexx)
@@ -128,57 +126,48 @@ end
 #Knn with embeddings without climate 
 
 function ksts(
-    Fld,
-    ngrids,
-    N_valid,
-    nneib,
-    w,
-    start_date,
-    day_mv,
-    max_embd,
-    sel_lags,
-    n_lags,
+    Fld, ngrids, N_valid, nneib, w, start_date, day_mv, max_embd, sel_lags, n_lags
 )
     st_date = Date(start_date, dateformat"m-d-y")
     end_date = st_date + Dates.Day(N_valid)
     dr = st_date:Day(1):end_date
     time_stamp = collect(dr)
     day_index = [Dates.dayofyear(i) for i in time_stamp]
-    
+
     #Setting up Storage for Simulations
     # why do we do this
     Xnew = zeros(N_valid, ngrids)
-    for i = 1:max_embd
+    for i in 1:max_embd
         Xnew[i, :] = jitter(Fld[i, :])
     end
-    
+
     #Creating the feature Vector/state space
     # [time, lags, locations]
-    X = zeros(Float64, N_valid - max_embd, n_lags, ngrids) 
+    X = zeros(Float64, N_valid - max_embd, n_lags, ngrids)
     Y = zeros(Float64, N_valid - max_embd, 1, ngrids)
-    
+
     #Get Lagged Structure Upto Max Embedding
     # Stores offset wind and solar output per day for each location [day, day after that; ....]
     # Y keeps original indexing 
-    for i = 1:ngrids
+    for i in 1:ngrids
         str = parse.(Float64, string.(Fld[:, i]))
         x_fld = embed(str, max_embd + 1, 1)
         x_fld1 = Matrix(x_fld)
-        x_fld2 = reverse(x_fld1, dims = 2)
-        X[:, :, i] = x_fld2[:, sel_lags.+1]
+        x_fld2 = reverse(x_fld1; dims=2)
+        X[:, :, i] = x_fld2[:, sel_lags .+ 1]
         Y[:, :, i] = x_fld2[:, 1]
     end
-    
+
     #Starting the Simulator
-    for i = (max_embd+1):N_valid
-        
+    for i in (max_embd + 1):N_valid
+
         # store the indices to hold the nearest neighbors
         # nn_index[time, neighbor index order, grid location] ordered set of k nearest neighbors indices for each site
         nn_index = zeros(1, nneib, ngrids)
 
         day = day_index[i] # day of year
         sel_days = close_ind(day, 366, day_mv) # season window
-        
+
         #Subset to the moving window
         indx = day_index #all days of months
         indx[i] = 999 # set current day to 999 so it wont be selected
@@ -194,10 +183,10 @@ function ksts(
         # for each location, 
         for j in 1:ngrids
             #Setting the Test Parameters
-            sel_pars = i .- sel_lags 
+            sel_pars = i .- sel_lags
             xtest = Xnew[sel_pars, j] # two day outputs from same location
             #Running the KNN Algorithm
-            nn_index[:, :, j] = knn_sim_index(X_t[:, :, j], xtest, nneib, w) 
+            nn_index[:, :, j] = knn_sim_index(X_t[:, :, j], xtest, nneib, w)
         end
 
         #Computing the Resampling Probability
@@ -206,9 +195,9 @@ function ksts(
 
         # nn_index  <-  matrix(unlist(nn_index), nrow=nneib)
 
-        for k = 1:length(un_index)
+        for k in 1:length(un_index)
             temp = mod(findall(nn_index .== un_index[k]), nneib)
-            for l = 1:length(temp)
+            for l in 1:length(temp)
                 if temp[l] == 0
                     temp[l] = 1 / nneib
                 else
@@ -218,7 +207,7 @@ function ksts(
             un_prob[k] = sum(temp)
         end
         pj = vcat(un_prob, un_index)
-        thresh = mapslices(x -> last(sort!(x), nneib + 1)[1], pj, dims = 1)[1]
+        thresh = mapslices(x -> last(sort!(x), nneib + 1)[1], pj; dims=1)[1]
         pjidx = findall(pj[1, :] .> thresh, pj)
         pj = pj[:, pjidx]
         pj[1, :] = pj[1, :] ./ sum(pj[1, :])
@@ -228,11 +217,10 @@ function ksts(
     end
     n_site = ngrids / 2
     WPnew = Xnew[:, 1:n_site]
-    SSnew = Xnew[:, (n_site+1):size(Xnew, 2)]
+    SSnew = Xnew[:, (n_site + 1):size(Xnew, 2)]
 
     return Dict(WPnew => WPnew, SSnew => SSnew)
 end
-
 
 #Run the Simulator
 
@@ -242,9 +230,3 @@ nsim = 48 # independent realizations
 day_mv = 30 # moving window size to account for seasonality 
 
 ksts(Fld, ngrids, N_valid, nneib, w, "01-01-1970", day_mv, max_embd, sel_lags, n_lags)
-
-
-
-
-
-
