@@ -11,7 +11,6 @@ n: lenght of record (time)
 """
 function make_synthetic_X(; p = 3, n = 7)
     X = Float64.(rand(1:10, n, p))
-    k = 3 # number of neighbors)
     return X
 end
 
@@ -39,19 +38,24 @@ k: the number of nearest neighbors to use
 """
 function compute_knn(D::Matrix{Float64}, tᵢ::Int, k::Int)
     nsites, ntimes = size(D)
-    tau = zeros(Float64, nsites, ntimes)
+    τ = zeros(Int64, nsites, ntimes)
     for i = 1:p
         r = (D[i, tᵢ] .- D[i, :]) .^ 2
-        tau[i, :] = sortperm(r, alg = QuickSort)
+        τ[i, :] = sortperm(r, alg = QuickSort)
     end
-    tau = Int.(tau[:, 1:k])
-    return tau
+    return τ[:, 1:k]
 end
 
-X = make_synthetic_X()
-D = define_state_space(X, 1)
-tau = compute_knn(D, 1, 3)
-
+# RUNNING DEMO
+p = 3
+n = 7
+M = 1
+tᵢ = 1
+k = 3
+X = make_synthetic_X(p = p, n = n)
+D = define_state_space(X, M)
+τ = compute_knn(D, tᵢ, k)
+# END -- old codes to add are below
 
 # step three - compute resampling probability
 sumj = sum([1 / ki for ki = 1:k])
