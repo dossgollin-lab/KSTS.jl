@@ -4,15 +4,22 @@ using StatsBase
 
 Random.seed!(1234)
 
-function make_synthetic_X()
-    p = 3 # number of sites
-    n = 7 # lenght of record (time)
+"""
+Create synthetic time series for analysis
+p: number of sites
+n: lenght of record (time)
+"""
+function make_synthetic_X(; p = 3, n = 7)
     X = Float64.(rand(1:10, n, p))
     k = 3 # number of neighbors)
     return X
 end
 
-# step one - create state space D
+"""
+Create a state space D 
+X: the observed data 
+M: the maximum lag to use
+"""
 function define_state_space(X::Matrix{Float64}, M::Int64)
     n, p = size(X)
     D = zeros(p, n - M)
@@ -24,12 +31,17 @@ function define_state_space(X::Matrix{Float64}, M::Int64)
     return D
 end
 
-# step two - compute k nearest neighbors for each site
-function compute_knn(D::Matrix{Float64}, ti::Int, k::Int)
+"""
+compute k nearest neighbors for each site
+D: the state space
+tᵢ: the current time index
+k: the number of nearest neighbors to use
+"""
+function compute_knn(D::Matrix{Float64}, tᵢ::Int, k::Int)
     nsites, ntimes = size(D)
     tau = zeros(Float64, nsites, ntimes)
     for i = 1:p
-        r = (D[i, ti] .- D[i, :]) .^ 2
+        r = (D[i, tᵢ] .- D[i, :]) .^ 2
         tau[i, :] = sortperm(r, alg = QuickSort)
     end
     tau = Int.(tau[:, 1:k])
