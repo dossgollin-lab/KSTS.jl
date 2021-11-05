@@ -38,7 +38,7 @@ end
 
 X = make_synthetic_X()
 D = define_state_space(X, 1)
-tau = compute_knn(D, 1)
+tau = compute_knn(D, 1, 3)
 
 
 # step three - compute resampling probability
