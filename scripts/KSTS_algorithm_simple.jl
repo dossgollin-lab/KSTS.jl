@@ -64,14 +64,14 @@ n: lenght of record (time)
 τ: k nearest neighbors 
 pj: resampling probability
 """
-function define_matrix_T(p::Int,n::Int,τ, pj)
-T = zeros(p, n)
-for j in 1:p
-    for i in τ[:, j]
-        T[findall(τ[:, j] .== i), i] .= pj[j][1] # TODO is there a faster way?
+function define_matrix_T(p::Int, n::Int, τ, pj)
+    T = zeros(p, n)
+    for j in 1:p
+        for i in τ[:, j]
+            T[findall(τ[:, j] .== i), i] .= pj[j][1] # TODO is there a faster way?
+        end
+        return T
     end
-    return T
-end
 end
 
 # compute similarity matrix
@@ -80,7 +80,7 @@ compute similarity matrix
 T: uncollapsed(?) similarity matrix
 k: number of nearest neighbors
 """
-function similarity_matrix(T,k)
+function similarity_matrix(T, k)
     sim = vec(sum(T; dims=1))
     ordersim = last(sortperm(sim; alg=QuickSort), k)
     return ordersim
@@ -105,5 +105,5 @@ D = define_state_space(X, M)
 τ = compute_knn(D, tᵢ, k)
 pj = compute_resample_prob(k)
 T = define_matrix_T(p, n, τ, pj)
-ordersim = similarity_matrix(T,k)
+ordersim = similarity_matrix(T, k)
 t = resample(ordersim)
