@@ -46,7 +46,55 @@ function compute_knn(D::Matrix{Float64}, tᵢ::Int, k::Int)
     return τ[:, 1:k]
 end
 
-# RUNNING DEMO
+"""
+compute resampling probability
+k: the number of nearest neighbors to use
+"""
+function compute_resample_prob(k::Int)
+    sumj = sum([1 / ki for ki in 1:k])
+    pj = [(1 / h) / sumj for h in 1:k]
+    return pj
+end
+
+# step four - Define matrix T
+"""
+define matrix T
+p: number of sites
+n: lenght of record (time)
+τ: k nearest neighbors 
+pj: resampling probability
+"""
+function define_matrix_T(p::Int,n::Int,τ, pj)
+T = zeros(p, n)
+for j in 1:p
+    for i in τ[:, j]
+        T[findall(τ[:, j] .== i), i] .= pj[j][1] # TODO is there a faster way?
+    end
+    return T
+end
+end
+
+# compute similarity matrix
+"""
+compute similarity matrix
+T: uncollapsed(?) similarity matrix
+k: number of nearest neighbors
+"""
+function similarity_matrix(T,k)
+    sim = vec(sum(T; dims=1))
+    ordersim = last(sortperm(sim; alg=QuickSort), k)
+    return ordersim
+end
+# step five - curtail largest k values
+"""
+ordersim: ordered similarity matrix
+"""
+function resample(ordersim)
+    sumq = sum(sim[ordersim])
+    prob = [sim[i] / sumq for i in ordersim]
+    return t = sample(ordersim, Weights(prob))
+end
+
 p = 3
 n = 7
 M = 1
@@ -55,27 +103,7 @@ k = 3
 X = make_synthetic_X(; p=p, n=n)
 D = define_state_space(X, M)
 τ = compute_knn(D, tᵢ, k)
-# END -- old codes to add are below
-
-# step three - compute resampling probability
-sumj = sum([1 / ki for ki in 1:k])
-pj = [(1 / h) / sumj for h in 1:k]
-
-# step four - Define matrix T
-T = zeros(p, n)
-for j in 1:p
-    for i in tau[:, j]
-        T[findall(tau[:, j] .== i), i] .= pj[j][1] # TODO is there a faster way?
-    end
-end
-
-# compute similarity matrix
-sim = vec(sum(T; dims=1))
-ordersim = last(sortperm(sim; alg=QuickSort), k)
-
-# step five - curtail largest k values
-sumq = sum(sim[ordersim])
-prob = [sim[i] / sumq for i in ordersim]
-
-# step five - resample from curtailed similarity matrix S
-t = sample(ordersim, Weights(prob))
+pj = compute_resample_prob(k)
+T = define_matrix_T(p, n, τ, pj)
+ordersim = similarity_matrix(T,k)
+t = resample(ordersim)
