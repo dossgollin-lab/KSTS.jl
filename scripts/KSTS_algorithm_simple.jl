@@ -122,7 +122,7 @@ for i in 1:nsim
     D = define_state_space(X, M)
     τ = compute_knn(D, tᵢ, k)
     pj = compute_resample_prob(k)
-    T = define_matrix_T(p, n, τ, pj)
+    T = define_matrix_T(p, n, τ, pj) ## something going on here
     sim,ordersim = similarity_matrix(T, k)
     tᵢ = resample(ordersim, sim)
 end
