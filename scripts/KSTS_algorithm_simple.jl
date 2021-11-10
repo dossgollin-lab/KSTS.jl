@@ -9,8 +9,8 @@ Create synthetic time series for analysis
 p: number of sites
 n: lenght of record (time)
 """
-function make_synthetic_X(; p=3, n=7)
-    X = Float64.(rand(1:10, n, p))
+function make_synthetic_X(p, n, nmax)
+    X = Float64.(rand(1:nmax, n, p))
     return X
 end
 
@@ -38,10 +38,10 @@ k: the number of nearest neighbors to use
 """
 function compute_knn(D::Matrix{Float64}, tᵢ::Int, k::Int)
     nsites, ntimes = size(D)
-    τ = zeros(Int64, nsites, ntimes)
+    τ = zeros(Int64, nsites, ntimes - 1)
     for i in 1:p
-        r = (D[i, tᵢ] .- D[i, :]) .^ 2
-        τ[i, :] = sortperm(r; alg=QuickSort)
+        r = (D[i, tᵢ] .- D[i, 1:end .!= tᵢ]) .^ 2 # remove last time step from state space
+        τ[i, :] = sortperm(r)
     end
     return τ[:, 1:k]
 end
@@ -65,13 +65,13 @@ n: lenght of record (time)
 pj: resampling probability
 """
 function define_matrix_T(p::Int, n::Int, τ, pj)
-    T = zeros(p, n)
-    for j in 1:p
+    T = zeros(k, n)
+    for j in 1:k
         for i in τ[:, j]
             T[findall(τ[:, j] .== i), i] .= pj[j][1] # TODO is there a faster way?
         end
-        return T
     end
+    return T
 end
 
 # compute similarity matrix
@@ -83,27 +83,48 @@ k: number of nearest neighbors
 function similarity_matrix(T, k)
     sim = vec(sum(T; dims=1))
     ordersim = last(sortperm(sim; alg=QuickSort), k)
-    return ordersim
+    return sim,ordersim
 end
 # step five - curtail largest k values
 """
 ordersim: ordered similarity matrix
 """
-function resample(ordersim)
+function resample(ordersim, sim)
     sumq = sum(sim[ordersim])
     prob = [sim[i] / sumq for i in ordersim]
     return t = sample(ordersim, Weights(prob))
 end
 
-p = 3
-n = 7
+
+"""
+Initialize hyper-Parameters
+p: number of sites
+n: number of time steps
+M: number of lags
+tᵢ: current time step
+k: number of nearest neighbors
+nsim: length of simulation
+time_series: stochastic projected time series
+"""
+
+p = 400
+n = 100
 M = 1
 tᵢ = 1
-k = 3
-X = make_synthetic_X(; p=p, n=n)
-D = define_state_space(X, M)
-τ = compute_knn(D, tᵢ, k)
-pj = compute_resample_prob(k)
-T = define_matrix_T(p, n, τ, pj)
-ordersim = similarity_matrix(T, k)
-t = resample(ordersim)
+k = 20
+nsim = 20
+time_series = zeros(1,nsim)
+nmax = 100
+
+for i in 1:nsim
+    time_series[i] = tᵢ
+    X = make_synthetic_X(p, n, nmax)
+    D = define_state_space(X, M)
+    τ = compute_knn(D, tᵢ, k)
+    pj = compute_resample_prob(k)
+    T = define_matrix_T(p, n, τ, pj)
+    sim,ordersim = similarity_matrix(T, k)
+    tᵢ = resample(ordersim, sim)
+end
+
+time_series
