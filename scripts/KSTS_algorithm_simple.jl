@@ -101,7 +101,7 @@ k: number of nearest neighbors
 function similarity_matrix(T, k)
     sim = vec(sum(T; dims=1))
     ordersim = last(sortperm(sim; alg=QuickSort), k)
-    return sim,ordersim
+    return sim, ordersim
 end
 # step five - curtail largest k values
 """
@@ -112,7 +112,6 @@ function resample(ordersim, sim)
     prob = [sim[i] / sumq for i in ordersim]
     return t = sample(ordersim, Weights(prob))
 end
-
 
 """
 Initialize hyper-Parameters
@@ -141,6 +140,7 @@ for i in 1:nsim
     pj = compute_resample_prob(k)
     T = define_matrix_T(X, τ, pj)
     sim,ordersim = similarity_matrix(T, k)
+
     tᵢ = resample(ordersim, sim)
 end
 
