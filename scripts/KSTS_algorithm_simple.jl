@@ -13,7 +13,7 @@ function get_input_data()
     wind_speed = readdlm("data/raw/ERCOT_Wind_Power_Daily.txt")
     return grid_locs, solar_radiation, wind_speed
 end
-function concat_data(n,p)
+function concat_data(n, p)
     grid_locs, ssrd, WP = get_input_data()
 
     WP_indexed = WP[2:(n + 1), 2:p]
@@ -81,7 +81,7 @@ X: concatenated data
 τ: k nearest neighbors 
 pj: resampling probability
 """
-function define_matrix_T(D,τ, pj)
+function define_matrix_T(D, τ, pj)
     nsites, n = size(D)
     T = zeros(n, nsites)
     for j in 1:k
@@ -130,22 +130,21 @@ M = 1
 tᵢ = 1
 k = 50
 nsim = 48
-time_series = zeros(1,nsim)
+time_series = zeros(1, nsim)
 nmax = 100
-X = concat_data(n,p)
+X = concat_data(n, p)
 D = define_state_space(X, M)
 for i in 1:nsim
     time_series[i] = tᵢ
     τ = compute_knn(D, tᵢ, k)
     pj = compute_resample_prob(k)
     T = define_matrix_T(X, τ, pj)
-    sim,ordersim = similarity_matrix(T, k)
+    sim, ordersim = similarity_matrix(T, k)
 
     tᵢ = resample(ordersim, sim)
 end
 
 time_series
-
 
 ## TODO: add in seasonal window
 ## Generalize for more lags

@@ -80,7 +80,6 @@ function knn_sim_index(x, xtest, nneib, w)
     return yknn
 end
 
-
 # use days in window
 function selected_days(days, sel_days)
     indexx = BitArray(undef, 1, length(days))
@@ -213,4 +212,3 @@ nsim = 48 # independent realizations
 day_mv = 30 # moving window size to account for seasonality 
 
 ksts(Fld, ngrids, N_valid, nneib, w, "01-01-1970", day_mv, max_embd, sel_lags, n_lags)
-
