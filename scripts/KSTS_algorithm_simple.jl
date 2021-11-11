@@ -1,9 +1,27 @@
 # define starting data
 using Random: Random
 using StatsBase
+using CSV
+using DataFrames
+using DelimitedFiles
 
 Random.seed!(1234)
 
+function get_input_data()
+    grid_locs = CSV.read("data/raw/ERCOT_0_5_deg_lat_lon_index_key.csv", DataFrame)
+    solar_radiation = readdlm("data/raw/ERCOT_Solar_Rad_Daily.txt")
+    wind_speed = readdlm("data/raw/ERCOT_Wind_Power_Daily.txt")
+    return grid_locs, solar_radiation, wind_speed
+end
+function concat_data(n,p)
+    grid_locs, ssrd, WP = get_input_data()
+
+    WP_indexed = WP[2:(n + 1), 2:p]
+
+    ssrd_indexed = ssrd[2:(n + 1), 2:p]
+    Fld = hcat(WP_indexed, ssrd_indexed)
+    return Fld
+end
 """
 Create synthetic time series for analysis
 p: number of sites
@@ -19,7 +37,7 @@ Create a state space D
 X: the observed data 
 M: the maximum lag to use
 """
-function define_state_space(X::Matrix{Float64}, M::Int64)
+function define_state_space(X::Matrix{Any}, M::Int64)
     n, p = size(X)
     D = zeros(p, n - M)
     for i in (1:p)
@@ -39,7 +57,7 @@ k: the number of nearest neighbors to use
 function compute_knn(D::Matrix{Float64}, tᵢ::Int, k::Int)
     nsites, ntimes = size(D)
     τ = zeros(Int64, nsites, ntimes - 1)
-    for i in 1:p
+    for i in 1:nsites
         r = (D[i, tᵢ] .- D[i, 1:end .!= tᵢ]) .^ 2 # remove last time step from state space
         τ[i, :] = sortperm(r)
     end
@@ -59,13 +77,13 @@ end
 # step four - Define matrix T
 """
 define matrix T
-p: number of sites
-n: lenght of record (time)
+X: concatenated data
 τ: k nearest neighbors 
 pj: resampling probability
 """
-function define_matrix_T(p::Int, n::Int, τ, pj)
-    T = zeros(k, n)
+function define_matrix_T(D,τ, pj)
+    nsites, n = size(D)
+    T = zeros(n, nsites)
     for j in 1:k
         for i in τ[:, j]
             T[findall(τ[:, j] .== i), i] .= pj[j][1] # TODO is there a faster way?
@@ -107,24 +125,27 @@ nsim: length of simulation
 time_series: stochastic projected time series
 """
 
-p = 400
-n = 100
+p = 217
+n = 5 * 365
 M = 1
 tᵢ = 1
-k = 20
-nsim = 20
+k = 50
+nsim = 48
 time_series = zeros(1,nsim)
 nmax = 100
-
+X = concat_data(n,p)
+D = define_state_space(X, M)
 for i in 1:nsim
     time_series[i] = tᵢ
-    X = make_synthetic_X(p, n, nmax)
-    D = define_state_space(X, M)
     τ = compute_knn(D, tᵢ, k)
     pj = compute_resample_prob(k)
-    T = define_matrix_T(p, n, τ, pj) ## something going on here 
+    T = define_matrix_T(X, τ, pj)
     sim,ordersim = similarity_matrix(T, k)
     tᵢ = resample(ordersim, sim)
 end
 
 time_series
+
+
+## TODO: add in seasonal window
+## Generalize for more lags

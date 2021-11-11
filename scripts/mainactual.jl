@@ -80,18 +80,6 @@ function knn_sim_index(x, xtest, nneib, w)
     return yknn
 end
 
-# Add noise to data
-function jitter(x)
-    z = findmax(collect(skipmissing(x)))[1] - findmin(collect(skipmissing(x)))[1]
-    a = z / 50
-    if a == 0
-        x = x .+ rand.()
-        return x
-    else
-        x = x .+ rand.(Uniform(-a, a))
-        return x
-    end
-end
 
 # use days in window
 function selected_days(days, sel_days)
@@ -134,12 +122,7 @@ function ksts(
     time_stamp = collect(dr)
     day_index = [Dates.dayofyear(i) for i in time_stamp]
 
-    #Setting up Storage for Simulations
-    # why do we do this
-    Xnew = zeros(N_valid, ngrids)
-    for i in 1:max_embd
-        Xnew[i, :] = jitter(Fld[i, :])
-    end
+    #Setting up Storage for Simulation
 
     #Creating the feature Vector/state space
     # [time, lags, locations]
@@ -184,7 +167,7 @@ function ksts(
         for j in 1:ngrids
             #Setting the Test Parameters
             sel_pars = i .- sel_lags
-            xtest = Xnew[sel_pars, j] # two day outputs from same location
+            xtest = Fld[sel_pars, j] # two day outputs from same location
             #Running the KNN Algorithm
             nn_index[:, :, j] = knn_sim_index(X_t[:, :, j], xtest, nneib, w)
         end
@@ -230,3 +213,4 @@ nsim = 48 # independent realizations
 day_mv = 30 # moving window size to account for seasonality 
 
 ksts(Fld, ngrids, N_valid, nneib, w, "01-01-1970", day_mv, max_embd, sel_lags, n_lags)
+
