@@ -1,150 +1,176 @@
-# define starting data
+# set this up to use the local package
+using Revise
+using LDSSim
+
+# import other packages
+using Distributions
+using DocStringExtensions
+using DrWatson
+using NearestNeighbors
 using Random: Random
 using StatsBase
-using CSV
-using DataFrames
-using DelimitedFiles
 
+# use this for consistent results
 Random.seed!(1234)
 
-function get_input_data()
-    grid_locs = CSV.read("data/raw/ERCOT_0_5_deg_lat_lon_index_key.csv", DataFrame)
-    solar_radiation = readdlm("data/raw/ERCOT_Solar_Rad_Daily.txt")
-    wind_speed = readdlm("data/raw/ERCOT_Wind_Power_Daily.txt")
-    return grid_locs, solar_radiation, wind_speed
-end
-function concat_data(n, p)
-    grid_locs, ssrd, WP = get_input_data()
-
-    WP_indexed = WP[2:(n + 1), 2:p]
-
-    ssrd_indexed = ssrd[2:(n + 1), 2:p]
-    Fld = hcat(WP_indexed, ssrd_indexed)
-    return Fld
-end
 """
-Create synthetic time series for analysis
-p: number of sites
-n: lenght of record (time)
+Create synthetic high-dimensional data set for analysis
+
+$(SIGNATURES)
+
+where 
+`n` is the number of time steps to create,
+`p` is the number of sites, 
+and data is drawn from  the univariate distribution `d`
 """
-function make_synthetic_X(p, n, nmax)
-    X = Float64.(rand(1:nmax, n, p))
+function make_synthetic_X(n::Integer, p::Integer, d::T) where {T<:UnivariateDistribution}
+    X = float.(rand(1:nmax, n, p))
     return X
 end
 
 """
 Create a state space D 
-X: the observed data 
-M: the maximum lag to use
+
+$(SIGNATURES)
+
+where `X` is the observed data indexed [time, field]
+and `M` is the maximum lag to use.
+
+Returns the lagged embedding space `D` indexed [time, field]
 """
-function define_state_space(X::Matrix{Any}, M::Int64)
+function define_state_space(X::Matrix{<:Real}, M::Integer)
     n, p = size(X)
-    D = zeros(p, n - M)
-    for i in (1:p)
-        for t in ((M + 1):n)
-            D[i, t - M] = (X[t - 1, i])
+    D = zeros(n - M, p)
+    for i ∈ (1:p)
+        for t ∈ ((M+1):n)
+            D[t-M, i] = (X[t-1, i])
         end
     end
     return D
 end
 
 """
-compute k nearest neighbors for each site
-D: the state space
-tᵢ: the current time index
-k: the number of nearest neighbors to use
+Compute the `k` nearest neighbors for each site
+
+$(SIGNATURES)
+
+where `D` is the state space,
+`tᵢ` is the current time index, and
+`k` is the number of nearest neighbors to use
 """
-function compute_knn(D::Matrix{Float64}, tᵢ::Int, k::Int)
-    nsites, ntimes = size(D)
-    τ = zeros(Int64, nsites, ntimes - 1)
-    for i in 1:nsites
-        r = (D[i, tᵢ] .- D[i, 1:end .!= tᵢ]) .^ 2 # remove last time step from state space
-        τ[i, :] = sortperm(r)
+function compute_knn(D::Matrix{<:Real}, tᵢ::Integer, k::Integer)
+    ntimes, nsites = size(D)
+    τ = zeros(Integer, ntimes - 1, nsites)
+    for i = 1:nsites
+        r = (D[tᵢ, i] .- D[1:end.!=tᵢ, i]) .^ 2 # remove last time step from state space
+        τ[:, i] = sortperm(r)
     end
     return τ[:, 1:k]
 end
 
 """
-compute resampling probability
-k: the number of nearest neighbors to use
+Compute the resampling probabilities
+
+$(SIGNATURES)
+
+where `k` the number of nearest neighbors to use.
+
+# Details
+
+Regardless of the distance, the K nearest neighbors are sampled with probability
+proportional to
+1/1, 1/2, 1/3, ..., 1/K.
 """
-function compute_resample_prob(k::Int)
-    sumj = sum([1 / ki for ki in 1:k])
-    pj = [(1 / h) / sumj for h in 1:k]
-    return pj
+function compute_resample_probs(k::Integer)
+    p = [(1 / kᵢ) for kᵢ = 1:k]
+    return p ./ sum(p)
 end
 
 # step four - Define matrix T
 """
-define matrix T
-X: concatenated data
-τ: k nearest neighbors 
-pj: resampling probability
+# TODO: a summary sentence here
+
+$(SIGNATURES)
+where `D` is the lag-embedded data and 
+`τ` gives the indices of the `k` nearest neighbors
 """
-function define_matrix_T(D, τ, pj)
-    nsites, n = size(D)
-    T = zeros(n, nsites)
-    for j in 1:k
+function define_matrix_T(D, τ) # TODO: this needs a clearer name
+    ntimes, nsites = size(D)
+    k = size(τ)[2]
+    pⱼ = compute_resample_probs(k)
+    T = zeros(ntimes, nsites)
+    for j = 1:k
         for i in τ[:, j]
-            T[findall(τ[:, j] .== i), i] .= pj[j][1] # TODO is there a faster way?
+            T[findall(τ[:, j] .== i), j] .= pⱼ[j][1] # TODO is there a faster way?
         end
     end
     return T
 end
 
-# compute similarity matrix
 """
-compute similarity matrix
-T: uncollapsed(?) similarity matrix
-k: number of nearest neighbors
+Compute the similarity matrix
+
+$(SIGNATURES)
+
+where `T` gives the 'uncollapsed' similarity matrix and
+`k` gives the number of nearest neighbors
 """
 function similarity_matrix(T, k)
-    sim = vec(sum(T; dims=1))
-    ordersim = last(sortperm(sim; alg=QuickSort), k)
+    sim = vec(sum(T, dims = 1))
+    ordersim = last(sortperm(sim; alg = QuickSort), k)
     return sim, ordersim
 end
-# step five - curtail largest k values
+
 """
-ordersim: ordered similarity matrix
+Get transition probs
 """
-function resample(ordersim, sim)
-    sumq = sum(sim[ordersim])
-    prob = [sim[i] / sumq for i in ordersim]
-    return t = sample(ordersim, Weights(prob))
+function get_next_probs(n::Integer, ordersim::Vector{<:Integer}, sim::Vector{<:Real})
+    probs = zeros(n)
+    for i in ordersim
+        probs[i] = sim[i]
+    end
+    return probs ./ sum(probs)
 end
 
-"""
-Initialize hyper-Parameters
-p: number of sites
-n: number of time steps
-M: number of lags
-tᵢ: current time step
-k: number of nearest neighbors
-nsim: length of simulation
-time_series: stochastic projected time series
-"""
-
-p = 217
-n = 5 * 365
-M = 1
-tᵢ = 1
-k = 50
-nsim = 48
-time_series = zeros(1, nsim)
-nmax = 100
-X = concat_data(n, p)
-D = define_state_space(X, M)
-for i in 1:nsim
-    time_series[i] = tᵢ
+function compute_transition_probs(D::Matrix{<:Real}, tᵢ::Integer, k::Integer)
     τ = compute_knn(D, tᵢ, k)
-    pj = compute_resample_prob(k)
-    T = define_matrix_T(X, τ, pj)
+    T = define_matrix_T(D, τ)
     sim, ordersim = similarity_matrix(T, k)
-
-    tᵢ = resample(ordersim, sim)
+    transition_probs = get_next_probs(n, ordersim, sim)
 end
 
-time_series
+
+function fit(X::Matrix{<:Real}, M::Integer, k::Integer)
+
+    # define the state space
+    D = define_state_space(X, M)
+
+    # initialze the big transitoin probability matrix
+    P = zeros(n, n)
+
+    # now fit the model
+    for tᵢ = 1:n
+        @show tᵢ
+        P[tᵢ, :] .= compute_transition_probs(D, tᵢ, k)
+    end
+
+    return P
+end
+
+function main()
+    # create synthetic data
+    n = 10 # number of time steps
+    p = 4 # number of sites
+    d = Normal(0, 1) # the distribution that X is drawn from
+    X = make_synthetic_X(n, p, d)
+
+    # fit the model
+    M = 1 # number of lags
+    k = 3 # number of nearest neighbors
+    P = fit(X, M, k)
+end
+
+main()
 
 ## TODO: add in seasonal window
 ## Generalize for more lags
