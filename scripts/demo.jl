@@ -22,6 +22,8 @@ end
 # get the raw data as a `WindSolarData` format
 input = get_default_inputs()
 
+𝐗 = hcat(input.wind, input.solar)
+
 # Fit the model (PLACEHOLDER VALUES!)
 fit = fit_ksts(input; n_neighbors=10, n_lags=3, max_window=3, max_embedding=3)
 
