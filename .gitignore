@@ -2,3 +2,4 @@
 .vscode/settings.json
 .DS_Store
 Manifest.toml
+data/processed/
