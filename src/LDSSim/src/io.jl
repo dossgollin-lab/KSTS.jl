@@ -1,7 +1,7 @@
 using JLD2
 using DrWatson
 
-function get_cache_fit(W::WindSolarData, K::Integer, fname; overwrite::Bool = false)
+function get_cache_fit(W::WindSolarData, K::Integer, fname; overwrite::Bool=false)
     try
         @assert !overwrite # if overwrite is true, this will force us to load
         @assert isfile(fname)
@@ -13,4 +13,3 @@ function get_cache_fit(W::WindSolarData, K::Integer, fname; overwrite::Bool = fa
         return fit_model
     end
 end
-

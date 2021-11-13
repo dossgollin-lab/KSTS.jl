@@ -12,9 +12,9 @@ This is a pre-processing step that only needs to be run once on input the datase
 function define_lagged_state_space(𝐗::Matrix{<:Real}, M::Integer)
     N, P = size(𝐗) # by definition!
     𝐃 = zeros(N - M, P)
-    for p = 1:P
-        for n = (M+1):N
-            𝐃[n-M, p] = 𝐗[n-1, p]
+    for p in 1:P
+        for n in (M + 1):N
+            𝐃[n - M, p] = 𝐗[n - 1, p]
         end
     end
     return 𝐃
@@ -34,7 +34,7 @@ This function returns a matrix τ, of dimension (P, K), where τ[p, k] gives the
 function compute_timestep_neighbors(𝐃::Matrix{<:Real}, n::Integer, K::Integer)
     ND, P = size(𝐃) # recall that D has (N-M) rows
     τ = zeros(Integer, P, K)
-    for p = 1:P
+    for p in 1:P
         r = (𝐃[n, p] .- 𝐃[:, p]) .^ 2
         r[n] = Inf # don't let a time step be its own nearest neighbor
         τ[p, :] = sortperm(r)[1:K]
@@ -56,14 +56,14 @@ function space_time_similarity(N::Integer, τ::Matrix{<:Real})
     P, K = size(τ) # we can infer this
 
     # resampling probabilities depend on the rank of the closeness, not the distance
-    probs = normalize([1 / k for k = 1:K])
+    probs = normalize([1 / k for k in 1:K])
 
     # initialize
     𝐓 = zeros(N, P)
 
     # populate 𝐓 based on τ
-    for p = 1:P
-        for k = 1:K
+    for p in 1:P
+        for k in 1:K
             𝐓[τ[p, k], p] = probs[k]
         end
     end
@@ -81,7 +81,7 @@ function compute_transition_probs(𝐃::Matrix{<:Real}, n::Integer, K::Integer)
     ND = size(𝐃)[1]
     τ = compute_timestep_neighbors(𝐃, n, K)
     𝐓 = space_time_similarity(ND, τ)
-    transition_probs = normalize(sum(𝐓, dims = 2)[:])
+    transition_probs = normalize(sum(𝐓; dims=2)[:])
     return transition_probs
 end
 
@@ -99,7 +99,6 @@ This function returns a `KSTSFit` object, which stores
     and (4) the parameters used for the fit (M, K).
 """
 function fit(W::WindSolarData, K::Integer)::KSTSFit
-
     M = 1 # TODO: need to implement more lags! I have some ideas.
 
     # digest the input data
@@ -117,5 +116,5 @@ function fit(W::WindSolarData, K::Integer)::KSTSFit
         𝐏[n, :] .= compute_transition_probs(𝐃, n, K)
     end
 
-    return KSTSFit(𝐃 = 𝐃, 𝐏 = 𝐏, lon = W.lon, lat = W.lat, M = M, K = K)
+    return KSTSFit(; 𝐃=𝐃, 𝐏=𝐏, lon=W.lon, lat=W.lat, M=M, K=K)
 end
