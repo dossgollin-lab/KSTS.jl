@@ -1,1 +1,1 @@
-# IMPLEMENT THE DIAGNOSTICS
+# TODO: develop some diagnostic plots

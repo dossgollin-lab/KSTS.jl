@@ -1,7 +1,15 @@
 module LDSSim
 
-include("core.jl")
+using DocStringExtensions
+using ProgressBars
+using Random
+using StatsBase
 
-export WindSolarData, ngrids, fit_ksts, simulate_ksts
+include("util.jl")
+include("types.jl")
+include("calc.jl")
+include("io.jl")
+
+export WindSolarData, ngrids, KSTSFit, get_cache_fit, fit
 
 end # module
