@@ -25,7 +25,6 @@ We generally follow the notation of Amonkar et al, though with some modification
 * scalar constants are given capital letters: `N = 10`, `M = 3`, etc
 * indices are lowercase: `[f(n) for n in 1:N]`
 * single-letter matrices (that follow the notation of Amonkar et al) are given uppercase bold letters: `𝐗 = [1 2; 3 4]`, etc (type `\bfX` + `Tab`)
-* distributions are script: `𝒟=Normal()` (type `\scrD` plus `Tab`)
 * everything else follows the Blue code style recommendations (click on the badge above). Generally this means striving towards self-documenting variable names
 
 ## TODO
