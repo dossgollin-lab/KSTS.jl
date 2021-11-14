@@ -37,7 +37,7 @@ function compute_timestep_neighbors(𝐃::Matrix{<:Real}, n::Integer, K::Integer
     for p in 1:P
         r = (𝐃[n, p] .- 𝐃[:, p]) .^ 2
         r[n] = Inf # don't let a time step be its own nearest neighbor
-        τ[p, :] = sortperm(r)[1:K]
+        τ[p, :] = partialsortperm(r, 1:K)
     end
     return τ
 end
@@ -81,7 +81,7 @@ function compute_transition_probs(𝐃::Matrix{<:Real}, n::Integer, K::Integer)
     ND = size(𝐃)[1]
     τ = compute_timestep_neighbors(𝐃, n, K)
     𝐓 = space_time_similarity(ND, τ)
-    transition_probs = normalize(sum(𝐓; dims=2)[:])
+    transition_probs = normalize(vec(sum.(eachrow(𝐓))))
     return transition_probs
 end
 
