@@ -30,13 +30,20 @@ where `𝐃` is the state space,
 `K` is the number of nearest neighbors to use.
 
 This function returns a matrix τ, of dimension (P, K), where τ[p, k] gives the index of the kth closest observation to that at time n, at site p.
+
+#TODO: the day of year screen would go here.
+This would involve passing in the days of year
+and screening
 """
 function compute_timestep_neighbors(𝐃::Matrix{<:Real}, n::Integer, K::Integer)
     ND, P = size(𝐃) # recall that D has (N-M) rows
     τ = zeros(Integer, P, K)
     for p in 1:P
-        r = (𝐃[n, p] .- 𝐃[:, p]) .^ 2
-        r[n] = Inf # don't let a time step be its own nearest neighbor
+        idx = collect(1:ND)#TODO: the day of year filter goes here
+        # the lags and weights would go here
+        # D[n, p, :] .- D[idx, p, :]
+        r = (𝐃[n, p] .- 𝐃[idx, p]) .^ 2
+        # r[n] = Inf # don't let a time step be its own nearest neighbor
         τ[p, :] = partialsortperm(r, 1:K)
     end
     return τ
@@ -100,16 +107,22 @@ This function returns a `KSTSFit` object, which stores
 """
 function fit(W::WindSolarData, K::Integer)::KSTSFit
     M = 1 # TODO: need to implement more lags! I have some ideas.
+    # lags = [1, 2, 4]
+    # lag_weights = [1, 1, 1]
+    # lag_weights = normalize(lag_weights) # so they sum to 1
 
     # digest the input data
     𝐗 = hcat(W.solar, W.wind) # TODO: should these be scaled in advance? Let's talk to Yash
     N, P = size(𝐗)
 
     # define the state space
+    # this is where the lags will come in
+    # 𝐃 will be 3D: [(N-M), P, M]
     𝐃 = define_lagged_state_space(𝐗, M)
+
     ND = size(𝐃)[1]
 
-    # initialze the big transitoin probability matrix
+    # initialze the big transition probability matrix
     𝐏 = zeros(ND, ND)
 
     for n in ProgressBar(1:ND)
@@ -117,4 +130,9 @@ function fit(W::WindSolarData, K::Integer)::KSTSFit
     end
 
     return KSTSFit(; 𝐃=𝐃, 𝐏=𝐏, lon=W.lon, lat=W.lat, M=M, K=K)
+end
+
+# TODO: document
+function simulate(fit::KSTSFit, nsteps::Integer)::Vector{Integer}
+    return 1 # TODO: update
 end

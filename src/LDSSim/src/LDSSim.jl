@@ -1,9 +1,6 @@
 module LDSSim
 
 using DocStringExtensions
-using ProgressBars
-using Random
-using StatsBase
 
 include("util.jl")
 include("types.jl")

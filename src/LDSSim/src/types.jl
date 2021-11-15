@@ -6,15 +6,16 @@ Shouldn't need much updating
 
 Wind and solar indexed [time, site]
 lon, lat indexed [site]
+
+#TODO: need to have dates or day of year as one of the data
 """
 struct WindSolarData
     wind::Matrix{<:Real}
     solar::Matrix{<:Real}
     lat::Vector{<:Real}
     lon::Vector{<:Real}
-    function WindSolarData(;
-        wind=zeros(3, 2), solar=zeros(3, 2), lat=zeros(2), lon=zeros(2)
-    )
+    #doy::Vector{Integer}
+    function WindSolarData(;wind, solar, lat, lon)
         @assert size(wind) == size(solar) "wind and solar must be same size"
         @assert size(lat) == size(lon) "longitude and latitude must be same size"
         @assert size(wind)[2] == size(lat)[1] "must be same number of grid cells and lon/lat info"
