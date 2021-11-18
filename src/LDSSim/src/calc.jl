@@ -1,3 +1,5 @@
+using ProgressBars
+
 """
 Define the state space D with multiple time embeddings
 
