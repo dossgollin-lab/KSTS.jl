@@ -40,8 +40,8 @@ and screening
 function compute_timestep_neighbors(𝐃::Matrix{<:Real}, n::Integer, K::Integer)
     ND, P = size(𝐃) # recall that D has (N-M) rows
     τ = zeros(Integer, P, K)
+    idx = selected_window(n, 60, 5)
     for p in 1:P
-        idx = collect(1:ND)#TODO: the day of year filter goes here
         # the lags and weights would go here
         # D[n, p, :] .- D[idx, p, :]
         r = (𝐃[n, p] .- 𝐃[idx, p]) .^ 2
