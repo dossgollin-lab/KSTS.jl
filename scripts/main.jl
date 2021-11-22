@@ -40,4 +40,4 @@ for _ in 1:10
     n = sample(1:size(my_fit.𝐃)[1], transition_probs)
     push!(n_archive, n)
 end
-my_fit.𝐃[n_archive, :]
+my_fit.𝐏[n_archive, :]
