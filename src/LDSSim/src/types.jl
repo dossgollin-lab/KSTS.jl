@@ -14,12 +14,12 @@ struct WindSolarData
     solar::Matrix{<:Real}
     lat::Vector{<:Real}
     lon::Vector{<:Real}
-    #doy::Vector{Integer}
-    function WindSolarData(; wind, solar, lat, lon)
+    nyears::Integer
+    function WindSolarData(; wind, solar, lat, lon, nyears)
         @assert size(wind) == size(solar) "wind and solar must be same size"
         @assert size(lat) == size(lon) "longitude and latitude must be same size"
         @assert size(wind)[2] == size(lat)[1] "must be same number of grid cells and lon/lat info"
-        return new(wind, solar, lat, lon)
+        return new(wind, solar, lat, lon, nyears)
     end
 end
 

@@ -37,13 +37,13 @@ This function returns a matrix τ, of dimension (P, K), where τ[p, k] gives the
 This would involve passing in the days of year
 and screening
 """
-function compute_timestep_neighbors(𝐃::Matrix{<:Real}, n::Integer, K::Integer)
+function compute_timestep_neighbors(
+    𝐃::Matrix{<:Real}, n::Integer, K::Integer, windowsize::Integer, nyears::Integer
+)
     ND, P = size(𝐃) # recall that D has (N-M) rows
     τ = zeros(Integer, P, K)
-    idx = selected_window(n, 60, 5)
+    idx = selected_window(n, windowsize, nyears)
     for p in 1:P
-        # the lags and weights would go here
-        # D[n, p, :] .- D[idx, p, :]
         r = (𝐃[n, p] .- 𝐃[idx, p]) .^ 2
         # r[n] = Inf # don't let a time step be its own nearest neighbor
         τ[p, :] = partialsortperm(r, 1:K)
@@ -86,9 +86,9 @@ $(SIGNATURES)
 
 This function returns a vector of length (N-M) indicating the probability of transitioning from state n to all other states.
 """
-function compute_transition_probs(𝐃::Matrix{<:Real}, n::Integer, K::Integer)
+function compute_transition_probs(𝐃::Matrix{<:Real}, n::Integer, K::Integer, windowsize::Integer, nyears::Integer)
     ND = size(𝐃)[1]
-    τ = compute_timestep_neighbors(𝐃, n, K)
+    τ = compute_timestep_neighbors(𝐃, n, K, windowsize, nyears)
     𝐓 = space_time_similarity(ND, τ)
     transition_probs = normalize(vec(sum.(eachrow(𝐓))))
     return transition_probs
@@ -107,7 +107,7 @@ This function returns a `KSTSFit` object, which stores
     (3) the longitudes and latitudes associated with each site,
     and (4) the parameters used for the fit (M, K).
 """
-function fit(W::WindSolarData, K::Integer)::KSTSFit
+function fit(W::WindSolarData, K::Integer, windowsize::Integer)::KSTSFit
     M = 1 # TODO: need to implement more lags! I have some ideas.
     # lags = [1, 2, 4]
     # lag_weights = [1, 1, 1]
@@ -128,7 +128,7 @@ function fit(W::WindSolarData, K::Integer)::KSTSFit
     𝐏 = zeros(ND, ND)
 
     for n in ProgressBar(1:ND)
-        𝐏[n, :] .= compute_transition_probs(𝐃, n, K)
+        𝐏[n, :] .= compute_transition_probs(𝐃, n, K, windowsize, W.nyears)
     end
 
     return KSTSFit(; 𝐃=𝐃, 𝐏=𝐏, lon=W.lon, lat=W.lat, M=M, K=K)
