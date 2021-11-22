@@ -86,7 +86,9 @@ $(SIGNATURES)
 
 This function returns a vector of length (N-M) indicating the probability of transitioning from state n to all other states.
 """
-function compute_transition_probs(𝐃::Matrix{<:Real}, n::Integer, K::Integer, windowsize::Integer, nyears::Integer)
+function compute_transition_probs(
+    𝐃::Matrix{<:Real}, n::Integer, K::Integer, windowsize::Integer, nyears::Integer
+)
     ND = size(𝐃)[1]
     τ = compute_timestep_neighbors(𝐃, n, K, windowsize, nyears)
     𝐓 = space_time_similarity(ND, τ)
