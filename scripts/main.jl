@@ -19,7 +19,7 @@ function get_default_inputs(; N=Nothing)
     if N == Nothing
         N = length(lon)
     end
-    return WindSolarData(; wind=wind[1:N, :], solar=solar[1:N, :], lon=lon, lat=lat)
+    return WindSolarData(; wind=wind[1:N, :], solar=solar[1:N, :], lon=lon, lat=lat, nyears = 5)
 end
 
 N = 250
@@ -33,11 +33,4 @@ fname = datadir("processed", "saved_fit_$(N)_$(K).jld2") # where to save / store
 my_fit = LDSSim.get_cache_fit(input, K, fname; overwrite=false)
 
 # how to simulate
-n = 10 # starting time step
-n_archive = []
-for _ in 1:10
-    transition_probs = Weights(my_fit.𝐏[n, :])
-    n = sample(1:size(my_fit.𝐃)[1], transition_probs)
-    push!(n_archive, n)
-end
-my_fit.𝐏[n_archive, :]
+time_series = simulate(my_fit, nsim = 48, t = 10)

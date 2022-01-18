@@ -16,7 +16,7 @@ function get_cache_fit(W::WindSolarData, K::Integer, fname; overwrite::Bool=fals
         fit_model = load(fname, "fit_model")
         return fit_model
     catch err
-        fit_model = fit(W, K)
+        fit_model = fit(W, K, windowsize)
         wsave(fname, Dict("fit_model" => fit_model))
         return fit_model
     end

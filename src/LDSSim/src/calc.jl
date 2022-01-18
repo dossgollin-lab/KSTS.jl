@@ -136,7 +136,18 @@ function fit(W::WindSolarData, K::Integer, windowsize::Integer)::KSTSFit
     return KSTSFit(; 𝐃=𝐃, 𝐏=𝐏, lon=W.lon, lat=W.lat, M=M, K=K)
 end
 
-# TODO: document
-function simulate(fit::KSTSFit, nsteps::Integer)::Vector{Integer}
-    return 1 # TODO: update
+"""
+Simulate time series
+$(SIGNATURES)
+This function returns a vector of a simulated time series
+"""
+
+function simulate(fit::KSTSFit, nsim::Integer, t::Integer)::Vector{Integer}
+    t_archive = []
+    for _ in 1:nsim
+        transition_probs = Weights(my_fit.𝐏[t, :])
+        n = sample(1:size(my_fit.𝐃)[1], transition_probs)
+        push!(t_archive, t)
+    end
+    return t_archive
 end
