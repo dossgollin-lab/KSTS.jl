@@ -10,16 +10,18 @@ using DelimitedFiles
 using StatsBase
 
 # here is a function to read in the raw data as a `WindSolarData` object
-function get_default_inputs(; N=Nothing)
+function get_default_inputs(; N=missing)
     grid_locs = CSV.read(datadir("raw", "ERCOT_0_5_deg_lat_lon_index_key.csv"), DataFrame)
     wind = readdlm(datadir("raw", "ERCOT_Wind_Power_Daily.txt"); skipstart=1)[:, 2:end]
     solar = readdlm(datadir("raw", "ERCOT_Solar_Rad_Daily.txt"); skipstart=1)[:, 2:end]
     lon = grid_locs[:, :lon]
     lat = grid_locs[:, :lat]
-    if N == Nothing
+    if ismissing(N)
         N = length(lon)
     end
-    return WindSolarData(; wind=wind[1:N, :], solar=solar[1:N, :], lon=lon, lat=lat, nyears = 5)
+    return WindSolarData(;
+        wind=wind[1:N, :], solar=solar[1:N, :], lon=lon, lat=lat, nyears=5
+    )
 end
 
 N = 250
@@ -30,7 +32,8 @@ fname = datadir("processed", "saved_fit_$(N)_$(K).jld2") # where to save / store
 
 # this function will try to load the fit -- if it doesn't work, it will run and then save
 # it is *not* sophisticated at all so if you change the inputs, set overwrite to `true`.
-my_fit = LDSSim.get_cache_fit(input, K, fname; overwrite=false)
+# TODO: what is windowsize?
+my_fit = LDSSim.get_cache_fit(input, K, fname; overwrite=true, windowsize=1)
 
 # how to simulate
-time_series = simulate(my_fit, nsim = 48, t = 10)
+time_series = simulate(my_fit; nsim=48, t=10)

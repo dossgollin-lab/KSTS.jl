@@ -9,7 +9,9 @@ $(SIGNATURES)
 Some more description
 #TODO improve docs
 """
-function get_cache_fit(W::WindSolarData, K::Integer, fname; overwrite::Bool=false)
+function get_cache_fit(
+    W::WindSolarData, K::Integer, fname; windowsize=5, overwrite::Bool=false
+)
     try
         @assert !overwrite # if overwrite is true, this will force us to load
         @assert isfile(fname)
