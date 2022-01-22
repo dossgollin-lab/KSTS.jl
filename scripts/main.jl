@@ -19,9 +19,7 @@ function get_default_inputs(; N=missing)
     if ismissing(N)
         N = length(lon)
     end
-    return WindSolarData(;
-        wind=wind[1:N, :], solar=solar[1:N, :], lon=lon, lat=lat, nyears=5
-    )
+    return WindSolarData( ;wind=wind[1:N, :], solar=solar[1:N, :], lon=lon, lat=lat)
 end
 
 N = 250
@@ -33,7 +31,7 @@ fname = datadir("processed", "saved_fit_$(N)_$(K).jld2") # where to save / store
 # this function will try to load the fit -- if it doesn't work, it will run and then save
 # it is *not* sophisticated at all so if you change the inputs, set overwrite to `true`.
 # TODO: what is windowsize?
-my_fit = LDSSim.get_cache_fit(input, K, fname; overwrite=true, windowsize=1)
+my_fit = LDSSim.get_cache_fit(input, K, fname; overwrite=true)
 
 # how to simulate
 time_series = simulate(my_fit; nsim=48, t=10)
