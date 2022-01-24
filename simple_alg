@@ -131,7 +131,7 @@ M = 1
 tᵢ = 10
 k = 50
 nsim = 48
-time_series = zeros(1,nsim)
+time_series = zeros(Int64, 1,nsim)
 nmax = 100
 X = concat_data(n,p)
 D = define_state_space(X, M)
@@ -144,8 +144,12 @@ for i in 1:nsim
     tᵢ = resample(ordersim, sim)
 end
 
-time_series
+X[time_series,:]
+
+function severity_duration
+     
 
 
 ## TODO: add in seasonal window
 ## Generalize for more lags
+

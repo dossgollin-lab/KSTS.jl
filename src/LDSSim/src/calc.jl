@@ -109,7 +109,7 @@ This function returns a `KSTSFit` object, which stores
     (3) the longitudes and latitudes associated with each site,
     and (4) the parameters used for the fit (M, K).
 """
-function fit(W::WindSolarData, K::Integer, windowsize::Integer)::KSTSFit
+function fit(W::WindSolarData, K::Integer, windowsize::Integer, nyears::Integer)::KSTSFit
     M = 1 # TODO: need to implement more lags! I have some ideas.
     # lags = [1, 2, 4]
     # lag_weights = [1, 1, 1]
@@ -130,7 +130,7 @@ function fit(W::WindSolarData, K::Integer, windowsize::Integer)::KSTSFit
     𝐏 = zeros(ND, ND)
 
     for n in ProgressBar(1:ND)
-        𝐏[n, :] .= compute_transition_probs(𝐃, n, K, windowsize, W.nyears)
+        𝐏[n, :] .= compute_transition_probs(𝐃, n, K, windowsize, nyears)
     end
 
     return KSTSFit(; 𝐃=𝐃, 𝐏=𝐏, lon=W.lon, lat=W.lat, M=M, K=K)

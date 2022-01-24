@@ -20,10 +20,10 @@ function selected_window(t, windowdays, years)
     bound = windowdays + 1
     half_window = Int(ceil(windowdays / 2))
     if t < 29
-        selected = zeros(1, bound * years + (half_window - t))
+        selected = zeros(Int64, 1, bound * years + (half_window - t))
         selected[1:(t + bound)] = (1:(t + bound))
     else
-        selected = zeros(1, bound * years)
+        selected = zeros(Int64, 1, bound * years)
         selected[1:bound] = ((t - half_window):(t + half_window))
     end
 

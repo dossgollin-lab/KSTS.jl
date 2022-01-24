@@ -33,5 +33,8 @@ fname = datadir("processed", "saved_fit_$(N)_$(K).jld2") # where to save / store
 # TODO: what is windowsize?
 my_fit = LDSSim.get_cache_fit(input, K, fname; overwrite=true)
 
-# how to simulate
+# used for indexing
 time_series = simulate(my_fit; nsim=48, t=10)
+
+# daily energy data for the simulated time series:
+WindSolarData[time_series,:]
