@@ -37,9 +37,7 @@ This function returns a matrix τ, of dimension (P, K), where τ[p, k] gives the
 This would involve passing in the days of year
 and screening
 """
-function compute_timestep_neighbors(
-    𝐃::Matrix{<:Real}, n::Integer, K::Integer
-)
+function compute_timestep_neighbors(𝐃::Matrix{<:Real}, n::Integer, K::Integer)
     ND, P = size(𝐃) # recall that D has (N-M) rows
     τ = zeros(Integer, P, K)
     idx = collect(1:ND)
@@ -86,9 +84,7 @@ $(SIGNATURES)
 
 This function returns a vector of length (N-M) indicating the probability of transitioning from state n to all other states.
 """
-function compute_transition_probs(
-    𝐃::Matrix{<:Real}, n::Integer, K::Integer
-)
+function compute_transition_probs(𝐃::Matrix{<:Real}, n::Integer, K::Integer)
     ND = size(𝐃)[1]
     τ = compute_timestep_neighbors(𝐃, n, K)
     𝐓 = space_time_similarity(ND, τ)
@@ -135,5 +131,3 @@ function fit(W::WindSolarData, K::Integer)::KSTSFit
 
     return KSTSFit(; 𝐃=𝐃, 𝐏=𝐏, lon=W.lon, lat=W.lat, M=M, K=K)
 end
-
-
