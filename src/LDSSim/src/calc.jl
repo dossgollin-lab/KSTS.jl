@@ -38,11 +38,11 @@ This would involve passing in the days of year
 and screening
 """
 function compute_timestep_neighbors(
-    𝐃::Matrix{<:Real}, n::Integer, K::Integer, windowsize::Integer, nyears::Integer
+    𝐃::Matrix{<:Real}, n::Integer, K::Integer
 )
     ND, P = size(𝐃) # recall that D has (N-M) rows
     τ = zeros(Integer, P, K)
-    idx = selected_window(n, windowsize, nyears)
+    idx = collect(1:ND)
     for p in 1:P
         r = (𝐃[n, p] .- 𝐃[idx, p]) .^ 2
         # r[n] = Inf # don't let a time step be its own nearest neighbor
@@ -87,10 +87,10 @@ $(SIGNATURES)
 This function returns a vector of length (N-M) indicating the probability of transitioning from state n to all other states.
 """
 function compute_transition_probs(
-    𝐃::Matrix{<:Real}, n::Integer, K::Integer, windowsize::Integer, nyears::Integer
+    𝐃::Matrix{<:Real}, n::Integer, K::Integer
 )
     ND = size(𝐃)[1]
-    τ = compute_timestep_neighbors(𝐃, n, K, windowsize, nyears)
+    τ = compute_timestep_neighbors(𝐃, n, K)
     𝐓 = space_time_similarity(ND, τ)
     transition_probs = normalize(vec(sum.(eachrow(𝐓))))
     return transition_probs
@@ -109,7 +109,7 @@ This function returns a `KSTSFit` object, which stores
     (3) the longitudes and latitudes associated with each site,
     and (4) the parameters used for the fit (M, K).
 """
-function fit(W::WindSolarData, K::Integer, windowsize::Integer, nyears::Integer)::KSTSFit
+function fit(W::WindSolarData, K::Integer)::KSTSFit
     M = 1 # TODO: need to implement more lags! I have some ideas.
     # lags = [1, 2, 4]
     # lag_weights = [1, 1, 1]
@@ -126,28 +126,14 @@ function fit(W::WindSolarData, K::Integer, windowsize::Integer, nyears::Integer)
 
     ND = size(𝐃)[1]
 
-    # initialze the big transition probability matrix
+    # initialize the big transition probability matrix
     𝐏 = zeros(ND, ND)
 
     for n in ProgressBar(1:ND)
-        𝐏[n, :] .= compute_transition_probs(𝐃, n, K, windowsize, nyears)
+        𝐏[n, :] .= compute_transition_probs(𝐃, n, K)
     end
 
     return KSTSFit(; 𝐃=𝐃, 𝐏=𝐏, lon=W.lon, lat=W.lat, M=M, K=K)
 end
 
-"""
-Simulate time series
-$(SIGNATURES)
-This function returns a vector of a simulated time series
-"""
 
-function simulate(fit::KSTSFit, nsim::Integer, t::Integer)::Vector{Integer}
-    t_archive = []
-    for _ in 1:nsim
-        transition_probs = Weights(my_fit.𝐏[t, :])
-        n = sample(1:size(my_fit.𝐃)[1], transition_probs)
-        push!(t_archive, t)
-    end
-    return t_archive
-end

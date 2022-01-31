@@ -144,9 +144,10 @@ for i in 1:nsim
     tᵢ = resample(ordersim, sim)
 end
 
+
+
 X[time_series,:]
 
-function severity_duration
      
 
 
