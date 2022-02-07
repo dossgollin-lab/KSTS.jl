@@ -15,6 +15,17 @@ struct WindSolarData
     lon::Vector{<:Real}
     doy::Vector{<:Int}
 end
+
+function WindSolarData(;
+    wind::Matrix{<:Real},
+    solar::Matrix{<:Real},
+    lat::Vector{<:Real},
+    lon::Vector{<:Real},
+    t::Vector{<:Date},
+)
+    doy = Dates.dayofyear.(t)
+    return WindSolarData(wind, solar, lat, lon, doy)
+end
 function WindSolarData(;
     wind::Matrix{<:Real},
     solar::Matrix{<:Real},
@@ -25,18 +36,8 @@ function WindSolarData(;
     @assert size(wind) == size(solar) "wind and solar must be same size"
     @assert size(lat) == size(lon) "longitude and latitude must be same size"
     @assert size(wind)[2] == size(lat)[1] "must be same number of grid cells and lon/lat info"
-    @assert size(wind)[1] == size(t)
+    @assert size(t) == size(wind,1)
     return WindSolarData(wind, solar, lat, lon, t)
-end
-function WindSolarData(;
-    wind::Matrix{<:Real},
-    solar::Matrix{<:Real},
-    lat::Vector{<:Real},
-    lon::Vector{<:Real},
-    t::Vector{<:Dates.Date},
-)
-    doy = Dates.dayofyear.(t)
-    return WindSolarData(wind, solar, lat, lon, doy)
 end
 
 """

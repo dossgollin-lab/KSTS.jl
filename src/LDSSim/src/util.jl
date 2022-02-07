@@ -1,4 +1,4 @@
-using Dates
+
 
 """
 Normalize a vector of weights/probabilities so that they sum to one
@@ -31,10 +31,9 @@ $(SIGNATURES)
 `t` is the current time step
 """
 function seasonal_window(doy::Int, windowsize::Int)
-    # convert t to DOY from WindSolarData?
     Δt = Int(floor((windowsize - 1) / 2))
     doy_i = doy - Δt
     doy_f = doy + Δt
-    return window = ((doy_i:doy_f) .- 1) .% 365 .+ 1
-    # find t where DOY == window 
+    window = ((doy_i:doy_f) .+ 365) .% 365 .-1
+    return window
 end
