@@ -21,29 +21,22 @@ function get_default_inputs(; N=missing)
     edate = sdate + Dates.Day(size(wind, 1) - 1)
     t = collect(sdate:Dates.Day(1):edate)
     if ismissing(N)
-        N = size(wind,1)
+        N = size(wind, 1)
     end
-    return WindSolarData(; wind=wind[1:N, :], solar=solar[1:N, :], lon=lon, lat=lat, t=t[1:N])
+    return WindSolarData(;
+        wind=wind[1:N, :], solar=solar[1:N, :], lon=lon, lat=lat, t=t[1:N]
+    )
 end
 
 N = 1000
-input = get_default_inputs(; N=N)
-
+input = get_default_inputs()
 
 K = 20 # number of nearest neighbors
 fname = datadir("processed", "saved_fit_$(N)_$(K).jld2") # where to save / store the fitted model
 
 # this function will try to load the fit -- if it doesn't work, it will run and then save
 # it is *not* sophisticated at all so if you change the inputs, set overwrite to `true`.
-my_fit = LDSSim.get_cache_fit(input, K, fname; overwrite=true)
+my_fit = LDSSim.get_cache_fit(input, K, fname; overwrite=false)
 
-# how to simulate
-nsim = 365
-t = 10 # starting time step
-t_archive = []
-for _ in 1:nsim
-    transition_probs = Weights(my_fit.𝐏[t, :])
-    t = sample(1:size(my_fit.𝐃)[1], transition_probs)
-    push!(t_archive, t)
-end
-sim_data = my_fit.𝐃[t_archive, :]
+# simulate from the fitted model
+my_sims = simulate(my_fit; N=100_000, t0=10)
