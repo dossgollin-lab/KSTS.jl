@@ -38,5 +38,7 @@ fname = datadir("processed", "saved_fit_$(N)_$(K).jld2") # where to save / store
 # it is *not* sophisticated at all so if you change the inputs, set overwrite to `true`.
 my_fit = LDSSim.get_cache_fit(input, K, fname; overwrite=false)
 
-# simulate from the fitted model
-my_sims = simulate(my_fit; N=100_000, t0=10)
+# simulate from the fitted model -- iterate 48 times for 48 realizations
+# TODO: probably a better way to do this
+my_sims = [simulate(my_fit; N=14610, t0=10) for i in 1:48]
+

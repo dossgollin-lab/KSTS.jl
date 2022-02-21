@@ -8,7 +8,7 @@ using StatsBase: Weights, sample
     lon::Vector{<:Real}
 end
 
-function simulate(fit::KSTSFit; N=365, t0=1)
+function simulate(fit::KSTSFit; N, t0)
     t = t0
     t_archive = zeros(Int, N)
     for n in 1:N
@@ -21,7 +21,7 @@ function simulate(fit::KSTSFit; N=365, t0=1)
     return KSTSSim(;
         lat=fit.lat,
         lon=fit.lon,
-        wind=sim_data[:, 1:n_grid],
-        solar=sim_data[:, (n_grid + 1):(2 * n_grid)],
+        solar=sim_data[:, 1:n_grid],
+        wind=sim_data[:, (n_grid + 1):(2 * n_grid)],
     )
 end

@@ -1,12 +1,7 @@
 using PlotlyJS, DataFrames, CSV
 
-wind = readdlm(datadir("raw", "ERCOT_Wind_Power_Daily.txt"); skipstart=1)[:, 2:end]
-solar = readdlm(datadir("raw", "ERCOT_Solar_Rad_Daily.txt"); skipstart=1)[:, 2:end]
-grid_locs = CSV.read(datadir("raw", "ERCOT_0_5_deg_lat_lon_index_key.csv"), DataFrame)
-lon = grid_locs[:, :lon]
-lat = grid_locs[:, :lat]
 
-function mean_map(data, lat, lon)
+function mean_map(data, titlemap)
     means = vec(mean(data; dims=1))
     marker = attr(;
         scope="usa",
@@ -20,19 +15,16 @@ function mean_map(data, lat, lon)
     trace = scattergeo(;
         mode="markers",
         locationmode=["USA-states"],
-        lat=lat,
-        lon=lon,
+        lat=input.lat,
+        lon=input.lon,
         marker=marker,
         name="Mean Data",
     )
-    layout = Layout(; geo=marker, fitbounds="locations")
-    return plot(trace, layout)
+    layout = Layout(; title = titlemap ,geo=marker, fitbounds="locations")
+    return PlotlyJS.plot(trace, layout)
 end
-mean_map(wind, lat, lon)
-mean_map(solar, lat, lon)
+mean_map(input.wind, "Mean Production - Wind")
+mean_map(input.solar, "Mean Production - Solar")
 
-
-mean_map(sim_data[:,1:216], lat, lon)
-# seasonal maps
 
 
