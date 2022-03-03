@@ -42,13 +42,16 @@ agg_daily_wind = sum(input.wind, dims = 2)
 histogram(agg_daily_wind, title = "Daily generation potential of reanalysis data - Wind")
     
 # 48 realizations of wind
-    allwind = [my_sims[i].wind for i in 1:48]
-    # turn into matrix
-w = reduce(hcat, allwind)
-C = reshape(w, 14610, 216, :)
-meanKSTSwind = mean(C, dims = 3)
-agg_daily_KSTSwind = reduce(vcat, sum(meanKSTSwind, dims = 2))
-histogram(agg_daily_KSTSwind,  title = "Daily generation potential of simulated data - Wind")
+allwind = hcat([sum(my_sims[i].wind, dims=2) for i in 1:48]...)
+histogram(vec(allwind))
+
+# turn into matrix
+#w = reduce(hcat, allwind)
+C = vcat(allwind...)
+#C = reshape(w, 14610, 216, :)
+#meanKSTSwind = mean(C, dims = 3)
+#agg_daily_KSTSwind = sum(C, dims=2) |> vec
+histogram(sum(C, dims=2),  title = "Daily generation potential of simulated data - Wind")
 
 
 

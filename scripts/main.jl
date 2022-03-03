@@ -28,10 +28,10 @@ function get_default_inputs(; N=missing)
     )
 end
 
-N = 1000
-input = get_default_inputs()
+N = missing
+input = get_default_inputs(N=N)
 
-K = 20 # number of nearest neighbors
+K = 50 # number of nearest neighbors
 fname = datadir("processed", "saved_fit_$(N)_$(K).jld2") # where to save / store the fitted model
 
 # this function will try to load the fit -- if it doesn't work, it will run and then save
@@ -40,5 +40,6 @@ my_fit = LDSSim.get_cache_fit(input, K, fname; overwrite=false)
 
 # simulate from the fitted model -- iterate 48 times for 48 realizations
 # TODO: probably a better way to do this
-my_sims = [simulate(my_fit; N=14610, t0=10) for i in 1:48]
+N_realization = 48
+my_sims = [simulate(my_fit; N=14610, t0=10) for i in 1:N_realization]
 
