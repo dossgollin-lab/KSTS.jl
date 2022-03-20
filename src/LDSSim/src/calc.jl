@@ -33,9 +33,6 @@ where `𝐃` is the state space,
 
 This function returns a matrix τ, of dimension (P, K), where τ[p, k] gives the index of the kth closest observation to that at time n, at site p.
 
-#TODO: the day of year screen would go here.
-This would involve passing in the days of year
-and screening
 """
 function compute_timestep_neighbors(𝐃::Matrix{<:Real}, n::Integer, K::Integer, windowsize::Int, DOY)
     ND, P = size(𝐃) # recall that D has (N-M) rows
