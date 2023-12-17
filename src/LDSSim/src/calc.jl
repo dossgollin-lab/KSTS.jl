@@ -34,7 +34,9 @@ where `𝐃` is the state space,
 This function returns a matrix τ, of dimension (P, K), where τ[p, k] gives the index of the kth closest observation to that at time n, at site p.
 
 """
-function compute_timestep_neighbors(𝐃::Matrix{<:Real}, n::Integer, K::Integer, windowsize::Int, DOY)
+function compute_timestep_neighbors(
+    𝐃::Matrix{<:Real}, n::Integer, K::Integer, windowsize::Int, DOY
+)
     ND, P = size(𝐃) # recall that D has (N-M) rows
     τ = zeros(Integer, P, K)
     doy_idx = seasonal_window(n, windowsize)
@@ -82,7 +84,9 @@ $(SIGNATURES)
 
 This function returns a vector of length (N-M) indicating the probability of transitioning from state n to all other states.
 """
-function compute_transition_probs(𝐃::Matrix{<:Real}, n::Integer, K::Integer, windowsize::Int, DOY)
+function compute_transition_probs(
+    𝐃::Matrix{<:Real}, n::Integer, K::Integer, windowsize::Int, DOY
+)
     ND = size(𝐃)[1]
     τ = compute_timestep_neighbors(𝐃, n, K, windowsize, DOY)
     𝐓 = space_time_similarity(ND, τ)

@@ -1,5 +1,4 @@
 
-
 """
 Normalize a vector of weights/probabilities so that they sum to one
 
@@ -34,6 +33,6 @@ function seasonal_window(doy::Int, windowsize::Int)
     Δt = Int(floor((windowsize - 1) / 2))
     doy_i = doy - Δt
     doy_f = doy + Δt
-    window = ((doy_i:doy_f) .+ 365) .% 365 .-1
+    window = ((doy_i:doy_f) .+ 365) .% 365 .- 1
     return window
 end
