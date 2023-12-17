@@ -1,6 +1,5 @@
 using PlotlyJS, DataFrames, CSV
 
-
 function mean_map(data, titlemap)
     means = vec(mean(data; dims=1))
     marker = attr(;
@@ -20,11 +19,8 @@ function mean_map(data, titlemap)
         marker=marker,
         name="Mean Data",
     )
-    layout = Layout(; title = titlemap ,geo=marker, fitbounds="locations")
+    layout = Layout(; title=titlemap, geo=marker, fitbounds="locations")
     return PlotlyJS.plot(trace, layout)
 end
 mean_map(input.wind, "Mean Production - Wind")
 mean_map(input.solar, "Mean Production - Solar")
-
-
-
